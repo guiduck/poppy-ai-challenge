@@ -28,6 +28,7 @@ export default function ChatApp() {
     if (!input.trim()) return;
 
     const userMsg = { role: "user", content: input };
+
     const loadingMsg = {
       role: "assistant",
       content: "Loading...",
@@ -140,7 +141,7 @@ export default function ChatApp() {
       <CardHeader className="flex flex-row items-center">
         <div className="flex items-center space-x-4">
           <Avatar>
-            <AvatarImage src="/avatars/01.png" alt="Avatar" />
+            <AvatarImage src="/favicon.png" alt="Avatar" />
             <AvatarFallback>AI</AvatarFallback>
           </Avatar>
           <div>
