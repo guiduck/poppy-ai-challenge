@@ -52,10 +52,24 @@ export default function ChatMessage({
   };
 
   const renderTextBlock = (block: BlockType, index: number) => {
-    if (block.type === "text") {
-      return <p key={`text-${index}`}>{parseLinks(block.text ?? "")}</p>;
+    const text = block.text ?? "";
+    const isHTML = /<a\s+href=/.test(text);
+
+    if (isHTML) {
+      return (
+        <p
+          key={`text-${index}`}
+          className="whitespace-pre-wrap break-words"
+          dangerouslySetInnerHTML={{ __html: text }}
+        />
+      );
     }
-    return null;
+
+    return (
+      <p key={`text-${index}`} className="whitespace-pre-wrap break-words">
+        {parseLinks(text)}
+      </p>
+    );
   };
 
   if ((content as any) === "Loading...") {

@@ -42,7 +42,11 @@ export default function ChatApp() {
       const resultsText = data
         .map(
           (r: any) =>
-            `${r.title}\n<a href="${r.url}" target="_blank" class="text-blue-400 underline">${r.url}</a>\n${r.snippet}`
+            `${r.title}\n<a href="${
+              r.url
+            }" target="_blank" class="text-blue-400 underline">${r.url}</a>\n${
+              r.snippet ?? ""
+            }`
         )
         .join("\n\n");
 
