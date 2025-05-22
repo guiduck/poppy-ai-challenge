@@ -159,7 +159,7 @@ export default function ChatApp() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               rows={1}
-              className="flex-1 w-full min-w-80 resize-y rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 max-h-32 overflow-y-auto"
+              className="scrollbar-hide flex-1 w-full min-w-80 resize-y rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 max-h-32 overflow-y-auto"
             />
             <Button
               className="w-12 h-auto max-h-32"
