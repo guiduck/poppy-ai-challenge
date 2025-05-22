@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any*/
 "use client";
 
-import { useState } from "react";
-import { Send } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Loader2, Send } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,10 +21,21 @@ export default function ChatApp() {
   const [input, setInput] = useState("");
   const [imageBase64, setImageBase64] = useState<string | null>(null);
 
+  const [loading, setLoading] = useState(false);
+  const chatBottomRef = useRef<HTMLDivElement | null>(null);
+
   async function handleWebSearch() {
     if (!input.trim()) return;
+
     const userMsg = { role: "user", content: input };
-    setMessages((prev) => [...prev, userMsg]);
+    const loadingMsg = {
+      role: "assistant",
+      content: "Loading...",
+      loading: true,
+    };
+
+    setMessages((prev) => [...prev, userMsg, loadingMsg]);
+    setLoading(true);
 
     try {
       const data = await fetchWebSearch(input);
@@ -45,17 +56,27 @@ export default function ChatApp() {
         ],
       };
 
-      setMessages((prev) => [...prev, aiMsg]);
+      setMessages((prev) => {
+        const copy = [...prev];
+        copy[copy.length - 1] = aiMsg;
+        return copy;
+      });
+
       setInput("");
     } catch (err) {
       toast.error("Web search failed. Please try again.");
       console.error(err);
+    } finally {
+      setLoading(false);
     }
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+
     if (!input.trim()) return;
+
+    setLoading(true);
 
     const userMsg = {
       role: "user",
@@ -74,22 +95,41 @@ export default function ChatApp() {
         : input,
     };
 
-    setMessages((prev) => [...prev, userMsg]);
+    const loadingMsg = {
+      role: "assistant",
+      content: "Loading...",
+      loading: true,
+    };
+
+    setMessages((prev) => [...prev, userMsg, loadingMsg]);
 
     try {
       const data = await fetchClaudeResponse(
         [...messages, userMsg],
         imageBase64
       );
-      const aiMsg = { role: "assistant", content: data.content };
-      setMessages((prev) => [...prev, aiMsg]);
+
+      setMessages((prev) => {
+        const copy = [...prev];
+        copy[copy.length - 1] = { role: "assistant", content: data.content };
+        return copy;
+      });
+
       setInput("");
       setImageBase64(null);
-    } catch (err) {
-      toast.error("Failed to get AI response. Try again later.");
+    } catch (err: any) {
+      const res = await err.json?.();
+      toast.error(res?.message ?? "Something went wrong.");
       console.error(err);
+    } finally {
+      setLoading(false);
     }
   }
+
+  useEffect(() => {
+    if (!chatBottomRef.current) return;
+    chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   return (
     <Card className="w-full max-w-2xl mx-auto mt-10">
@@ -109,6 +149,7 @@ export default function ChatApp() {
         {messages.map((msg, idx) => (
           <ChatMessage key={idx} role={msg.role} content={msg.content} />
         ))}
+        <div ref={chatBottomRef} />
       </CardContent>
       <CardFooter>
         <form onSubmit={handleSubmit} className="flex w-full flex-col gap-2">
@@ -124,9 +165,13 @@ export default function ChatApp() {
               className="w-12 h-auto max-h-32"
               type="submit"
               size="icon"
-              disabled={!input.trim()}
+              disabled={!input.trim() || loading}
             >
-              <Send className="h-4 w-4" />
+              {loading ? (
+                <Loader2 className="h-4 w-4 animate-spin text-blue-950" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
               <span className="sr-only">Send</span>
             </Button>
           </div>

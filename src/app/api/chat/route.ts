@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     return new Response(JSON.stringify({ content: contentBlocks }));
   } catch (error) {
     return new Response(
-      JSON.stringify({ error: "Failed to fetch from Claude API.", raw: error }),
+      JSON.stringify({ message: "Failed to fetch from Claude API.", error }),
       { status: 500 }
     );
   }

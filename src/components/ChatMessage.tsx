@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @next/next/no-img-element */
 import { cn } from "@/lib/utils";
-import Image from "next/image";
+import { Loader2 } from "lucide-react";
 
 type BlockType = {
   type: string;
@@ -39,7 +40,7 @@ export default function ChatMessage({
   const renderImagePreview = (block: BlockType, index: number) => {
     if (block.type === "image" && block.source?.type === "base64") {
       return (
-        <Image
+        <img
           key={`img-${index}`}
           src={`data:${block.source.media_type};base64,${block.source.data}`}
           alt="Uploaded"
@@ -56,7 +57,20 @@ export default function ChatMessage({
     }
     return null;
   };
-  console.log(content);
+
+  if ((content as any) === "Loading...") {
+    return (
+      <div
+        className={cn("italic text-muted-foreground", isUser ? "ml-auto" : "")}
+      >
+        <span className="flex items-center gap-2">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Thinking...
+        </span>
+      </div>
+    );
+  }
+
   const blocks = Array.isArray(content)
     ? content
     : [{ type: "text", text: content }];

@@ -8,7 +8,8 @@ export async function fetchClaudeResponse(
     body: JSON.stringify({ messages, imageBase64 }),
   });
 
-  if (!res.ok) throw new Error("Chat API failed");
+  if (!res.ok) throw res;
+
   return res.json();
 }
 
@@ -18,6 +19,7 @@ export async function fetchWebSearch(query: string) {
     body: JSON.stringify({ query }),
   });
 
-  if (!res.ok) throw new Error("Search API failed");
+  if (!res.ok) throw res;
+
   return res.json();
 }
