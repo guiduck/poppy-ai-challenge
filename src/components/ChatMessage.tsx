@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any*/
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 
@@ -13,7 +13,7 @@ export default function ChatMessage({
   content,
 }: Readonly<{
   role: string;
-  content: string | { type: string; text?: string; source?: any }[];
+  content: string | BlockType[];
 }>) {
   const isUser = role === "user";
 
@@ -36,35 +36,30 @@ export default function ChatMessage({
     );
   }
 
-  const renderBlock = (block: BlockType, index: number) => {
-    if (!block) {
-      return undefined;
-    }
-
-    const { type, source } = block;
-    console.log("source", typeof source);
-
-    if (type === "image" && source?.type === "base64") {
+  const renderImagePreview = (block: BlockType, index: number) => {
+    if (block.type === "image" && block.source?.type === "base64") {
       return (
         <Image
-          key={index}
+          key={`img-${index}`}
           src={`data:${block.source.media_type};base64,${block.source.data}`}
-          alt=""
-          className="my-2 rounded max-w-xs border"
+          alt="Uploaded"
+          className="rounded-lg max-w-[160px] border shadow-sm"
         />
       );
     }
-
-    if (type === "text") {
-      return <p key={index}>{parseLinks(block.text ?? "")}</p>;
-    }
-
-    return (
-      <p key={index} className="italic text-muted-foreground">
-        [Unsupported block type: {block.type}]
-      </p>
-    );
+    return null;
   };
+
+  const renderTextBlock = (block: BlockType, index: number) => {
+    if (block.type === "text") {
+      return <p key={`text-${index}`}>{parseLinks(block.text ?? "")}</p>;
+    }
+    return null;
+  };
+  console.log(content);
+  const blocks = Array.isArray(content)
+    ? content
+    : [{ type: "text", text: content }];
 
   return (
     <div
@@ -73,11 +68,10 @@ export default function ChatMessage({
         isUser ? "ml-auto bg-primary text-primary-foreground" : "bg-muted"
       )}
     >
-      {typeof content === "string" ? (
-        <p>{content}</p>
-      ) : (
-        content.map((block, index) => renderBlock(block, index))
-      )}
+      <div className="flex flex-wrap gap-2">
+        {blocks.map((block, i) => renderImagePreview(block, i))}
+      </div>
+      {blocks.map((block, i) => renderTextBlock(block, i))}
     </div>
   );
 }

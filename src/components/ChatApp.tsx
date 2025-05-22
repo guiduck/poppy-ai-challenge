@@ -57,7 +57,23 @@ export default function ChatApp() {
     e.preventDefault();
     if (!input.trim()) return;
 
-    const userMsg = { role: "user", content: input };
+    const userMsg = {
+      role: "user",
+      content: imageBase64
+        ? [
+            { type: "text", text: input },
+            {
+              type: "image",
+              source: {
+                type: "base64",
+                media_type: "image/png",
+                data: imageBase64,
+              },
+            },
+          ]
+        : input,
+    };
+
     setMessages((prev) => [...prev, userMsg]);
 
     try {

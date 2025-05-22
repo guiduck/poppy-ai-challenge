@@ -6,10 +6,10 @@ import { Button } from "@/components/ui/button";
 export default function ImageInput({
   onImage,
   hasImage,
-}: {
+}: Readonly<{
   onImage: (b64: string) => void;
   hasImage: boolean;
-}) {
+}>) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   function handleFile(event: React.ChangeEvent<HTMLInputElement>) {
