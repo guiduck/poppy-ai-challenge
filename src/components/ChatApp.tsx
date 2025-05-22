@@ -132,7 +132,7 @@ export default function ChatApp() {
   }, [messages]);
 
   return (
-    <Card className="w-full max-w-2xl mx-auto mt-10">
+    <Card className="w-full max-w-2xl mx-auto mt-10 bg-slate-900">
       <CardHeader className="flex flex-row items-center">
         <div className="flex items-center space-x-4">
           <Avatar>
