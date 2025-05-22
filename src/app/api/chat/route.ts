@@ -8,19 +8,24 @@ export async function POST(req: NextRequest) {
     const content = messages.map((msg: any) => {
       if (
         msg.role === "user" &&
-        msg.content === messages[messages.length - 1].content &&
+        msg === messages[messages.length - 1] &&
         imageBase64
       ) {
+        const baseContent =
+          typeof msg.content === "string"
+            ? [{ type: "text", text: msg.content }]
+            : msg.content;
+
         return {
           role: msg.role,
           content: [
-            { type: "text", text: msg.content },
+            ...baseContent,
             {
               type: "image",
               source: {
                 type: "base64",
                 media_type: "image/png",
-                data: JSON.stringify(imageBase64),
+                data: imageBase64,
               },
             },
           ],
