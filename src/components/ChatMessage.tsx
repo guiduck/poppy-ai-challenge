@@ -1,4 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any*/
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 type BlockType = {
   type: string;
@@ -40,10 +42,11 @@ export default function ChatMessage({
     }
 
     const { type, source } = block;
+    console.log("source", typeof source);
 
     if (type === "image" && source?.type === "base64") {
       return (
-        <img
+        <Image
           key={index}
           src={`data:${block.source.media_type};base64,${block.source.data}`}
           alt=""

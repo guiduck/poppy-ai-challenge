@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any*/
 export async function fetchClaudeResponse(
   messages: any[],
   imageBase64: string | null
