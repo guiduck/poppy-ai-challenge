@@ -15,6 +15,8 @@ import ImageInput from "@/components/ImageInput";
 import ChatMessage from "@/components/ChatMessage";
 import { toast } from "sonner";
 import { fetchClaudeResponse, fetchWebSearch } from "@/services/chat";
+import { getLink } from "@/utils/formatLinks";
+import { Message } from "@/types/message";
 
 export default function ChatApp() {
   const [messages, setMessages] = useState<any[]>([]);
@@ -41,13 +43,8 @@ export default function ChatApp() {
     try {
       const data = await fetchWebSearch(input);
       const resultsText = data
-        .map(
-          (r: any) =>
-            `${r.title}\n<a href="${
-              r.url
-            }" target="_blank" class="text-blue-400 underline">${r.url}</a>\n${
-              r.snippet ?? ""
-            }`
+        .map(({ title, url }: { title: string; url: string }) =>
+          getLink(title, url)
         )
         .join("\n\n");
 
@@ -83,21 +80,18 @@ export default function ChatApp() {
 
     setLoading(true);
 
+    const content: Message["content"] = [{ type: "text", text: input }];
+
+    if (imageBase64) {
+      content.push({
+        type: "image_url",
+        image_url: { url: `data:image/png;base64,${imageBase64}` },
+      });
+    }
+
     const userMsg = {
       role: "user",
-      content: imageBase64
-        ? [
-            { type: "text", text: input },
-            {
-              type: "image",
-              source: {
-                type: "base64",
-                media_type: "image/png",
-                data: imageBase64,
-              },
-            },
-          ]
-        : input,
+      content,
     };
 
     const loadingMsg = {
@@ -109,14 +103,17 @@ export default function ChatApp() {
     setMessages((prev) => [...prev, userMsg, loadingMsg]);
 
     try {
-      const data = await fetchClaudeResponse(
-        [...messages, userMsg],
-        imageBase64
+      const cleanMessages = messages.filter(
+        (msg) => msg.content !== "Loading..." && msg.content !== undefined
       );
+      const data = await fetchClaudeResponse([...cleanMessages, userMsg]);
 
       setMessages((prev) => {
         const copy = [...prev];
-        copy[copy.length - 1] = { role: "assistant", content: data.content };
+        copy[copy.length - 1] = {
+          role: "assistant",
+          content: data.result,
+        };
         return copy;
       });
 

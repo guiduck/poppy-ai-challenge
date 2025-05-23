@@ -1,11 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any*/
-export async function fetchClaudeResponse(
-  messages: any[],
-  imageBase64: string | null
-) {
+export async function fetchClaudeResponse(messages: any[]) {
   const res = await fetch("/api/chat", {
     method: "POST",
-    body: JSON.stringify({ messages, imageBase64 }),
+    body: JSON.stringify({ messages }),
   });
 
   if (!res.ok) throw res;
@@ -21,5 +18,7 @@ export async function fetchWebSearch(query: string) {
 
   if (!res.ok) throw res;
 
-  return res.json();
+  const data = await res.json();
+
+  return data.json();
 }

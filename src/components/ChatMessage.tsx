@@ -6,7 +6,9 @@ import { Loader2 } from "lucide-react";
 type BlockType = {
   type: string;
   text?: string;
-  source?: any;
+  image_url?: {
+    url: string;
+  };
 };
 
 export default function ChatMessage({
@@ -18,10 +20,14 @@ export default function ChatMessage({
 }>) {
   const isUser = role === "user";
 
-  function parseLinks(text: string) {
+  function renderLinks(text: string) {
     const parts = text.split(/(https?:\/\/[^\s]+)/g);
-    return parts.map((part, idx) =>
-      part.startsWith("http") ? (
+    return parts.map((part, idx) => {
+      if (!part.startsWith("http")) {
+        return <span key={idx}>{part}</span>;
+      }
+
+      return (
         <a
           key={idx}
           href={part}
@@ -31,24 +37,21 @@ export default function ChatMessage({
         >
           {part}
         </a>
-      ) : (
-        <span key={idx}>{part}</span>
-      )
-    );
+      );
+    });
   }
 
   const renderImagePreview = (block: BlockType, index: number) => {
-    if (block.type === "image" && block.source?.type === "base64") {
-      return (
-        <img
-          key={`img-${index}`}
-          src={`data:${block.source.media_type};base64,${block.source.data}`}
-          alt="Uploaded"
-          className="rounded-lg max-w-[160px] border shadow-sm"
-        />
-      );
-    }
-    return null;
+    if (block.type !== "image_url") return;
+
+    return (
+      <img
+        key={`img-${index}`}
+        src={block.image_url?.url}
+        alt="Uploaded"
+        className="rounded-lg max-w-[160px] border shadow-sm"
+      />
+    );
   };
 
   const renderTextBlock = (block: BlockType, index: number) => {
@@ -67,7 +70,7 @@ export default function ChatMessage({
 
     return (
       <p key={`text-${index}`} className="whitespace-pre-wrap break-words">
-        {parseLinks(text)}
+        {renderLinks(text)}
       </p>
     );
   };
