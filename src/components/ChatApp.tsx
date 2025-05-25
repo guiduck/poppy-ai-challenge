@@ -1,7 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any*/
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Loader2, Send } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -13,12 +12,8 @@ import {
 } from "@/components/ui/card";
 import ImageInput from "@/components/ImageInput";
 import ChatMessage from "@/components/ChatMessage";
-import { toast } from "sonner";
-import { fetchGptResponse, fetchWebSearch } from "@/services/chat";
-import { getLink } from "@/utils/formatLinks";
-import { Message } from "@/types/message";
-import { useChat } from "@/app/context/ChatContext";
 import { Input } from "./ui/input";
+import useChatServices from "@/hooks/useChatServices";
 
 interface IChatAppProps {
   id: string;
@@ -28,125 +23,15 @@ export default function ChatApp({ id }: Readonly<IChatAppProps>) {
   const [input, setInput] = useState("");
   const [imageBase64, setImageBase64] = useState<string | null>(null);
 
-  const [loading, setLoading] = useState(false);
   const chatBottomRef = useRef<HTMLDivElement | null>(null);
 
-  const { chats, setChatMessages, getChatMessagesById } = useChat();
-
-  const messages = useMemo(
-    () => getChatMessagesById(id) ?? [],
-    [id, getChatMessagesById]
+  const { handleSubmit, handleWebSearch, messages, loading } = useChatServices(
+    id,
+    imageBase64,
+    setImageBase64,
+    input,
+    setInput
   );
-  const nodesMessages = useMemo(() => {
-    const chat = chats.find((chat) => chat.id === id);
-    const allNodesMessages = chat?.nodes.map(getChatMessagesById).flat();
-    console.log("allNodesMessages", allNodesMessages);
-    return allNodesMessages ?? [];
-  }, [id, chats, getChatMessagesById]);
-
-  async function handleWebSearch() {
-    if (!input.trim()) return;
-
-    const userMsg: Message = { role: "user", content: input };
-
-    const loadingMsg: Message = {
-      role: "assistant",
-      content: "Loading...",
-    };
-
-    setChatMessages(id, [...messages, userMsg, loadingMsg]);
-    setLoading(true);
-
-    try {
-      const data = await fetchWebSearch(input);
-      const resultsText = data
-        .map(({ title, url }: { title: string; url: string }) =>
-          getLink(title, url)
-        )
-        .join("\n\n");
-
-      const aiMsg: Message = {
-        role: "assistant",
-        content: [
-          {
-            type: "text" as const,
-            text: `Here are the top search results:\n\n${resultsText}`,
-          },
-        ],
-      };
-
-      setChatMessages(id, [...messages, userMsg, aiMsg]);
-      setInput("");
-    } catch (err) {
-      toast.error("Web search failed. Please try again.");
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-
-    if (!input.trim()) return;
-
-    setLoading(true);
-
-    const content: Message["content"] = [{ type: "text", text: input }];
-
-    if (imageBase64) {
-      content.push({
-        type: "image_url",
-        image_url: { url: `data:image/png;base64,${imageBase64}` },
-      });
-    }
-
-    const userMsg: Message = {
-      role: "user",
-      content,
-    };
-
-    const loadingMsg: Message = {
-      role: "assistant",
-      content: "Loading...",
-    };
-
-    setChatMessages(id, [...messages, userMsg, loadingMsg]);
-
-    try {
-      const allMsgsFromContext = [...nodesMessages, ...messages, userMsg];
-      const cleanMessages = allMsgsFromContext.filter(
-        (msg) => msg?.content !== "Loading..." && msg?.content !== undefined
-      );
-
-      console.log("data being sent:", cleanMessages);
-
-      const data = await fetchGptResponse([...cleanMessages, userMsg]);
-
-      console.log("data recieved", data);
-
-      const newMessages: Message[] = [
-        ...messages,
-        {
-          role: "user",
-          content,
-        },
-        {
-          role: "assistant",
-          content: data.result,
-        },
-      ];
-      setChatMessages(id, newMessages);
-      setInput("");
-      setImageBase64(null);
-    } catch (err: any) {
-      const res = await err.json?.();
-      toast.error(res?.message ?? "Something went wrong.");
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  }
 
   useEffect(() => {
     if (!chatBottomRef.current) return;

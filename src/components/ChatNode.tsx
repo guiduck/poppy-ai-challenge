@@ -78,7 +78,7 @@ export default function ChatNode({
   return (
     <div
       ref={nodeRef}
-      className="w-auto p-3 border-2 border-[#333] shadow-md rounded-lg bg-[#111]"
+      className="w-auto p-3 border-2 border-zinc-500 shadow-md rounded-lg bg-[#111]"
       style={{
         cursor: isDragging ? "grabbing" : "grab",
         boxShadow: selected ? "0 0 0 2px #4f46e5" : "0 1px 4px rgba(0,0,0,0.3)",
