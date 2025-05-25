@@ -15,8 +15,6 @@ export async function POST(req: NextRequest) {
       max_tokens: 1000,
     });
 
-    console.log("completion", completion);
-
     return NextResponse.json({ result: completion.choices[0].message.content });
   } catch (error) {
     console.error("OpenAI error:", error);
