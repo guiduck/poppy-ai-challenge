@@ -1,6 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @next/next/no-img-element */
 import { cn } from "@/lib/utils";
+import { Message } from "@/types/message";
 import { Loader2 } from "lucide-react";
 
 type BlockType = {
@@ -75,7 +75,7 @@ export default function ChatMessage({
     );
   };
 
-  if ((content as any) === "Loading...") {
+  if ((content as Message["content"]) === "Loading...") {
     return (
       <div
         className={cn("italic text-muted-foreground", isUser ? "ml-auto" : "")}
