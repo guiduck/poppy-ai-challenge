@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any*/
 "use client";
 
-import { useChat } from "@/app/context/ChatContext";
 import { toast } from "sonner";
 import { fetchGptResponse, fetchWebSearch } from "@/services/chat";
 import { getLink } from "@/utils/formatLinks";
 import { useMemo, useState } from "react";
 import type { Message } from "@/types/message";
+import useChat from "./useChat";
 
 function useChatServices(
   chatId: string,

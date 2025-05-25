@@ -5,7 +5,6 @@ import React, {
   Dispatch,
   SetStateAction,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useState,
@@ -153,12 +152,4 @@ const ChatContextProvider = ({ children }: ChatContextProviderProps) => {
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
 };
 
-const useChat = () => {
-  const context = useContext(ChatContext);
-  if (!context) {
-    throw new Error("useChat must be used within a ChatContextProvider");
-  }
-  return context;
-};
-
-export { useChat, ChatContextProvider };
+export default ChatContextProvider;
