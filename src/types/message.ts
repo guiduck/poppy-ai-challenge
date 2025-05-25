@@ -1,3 +1,12 @@
+type ChatType = {
+  id: string;
+  nodes: string[];
+};
+
+type MessageDictionary = {
+  [key: string]: Message[];
+};
+
 type ContentBlock = {
   type: string;
   text?: string;
@@ -6,7 +15,9 @@ type ContentBlock = {
   };
 };
 
-export interface Message {
+type Message = {
   role: "user" | "assistant";
-  content: ContentBlock[];
-}
+  content: ContentBlock[] | string;
+};
+
+export type { ContentBlock, Message, MessageDictionary, ChatType };

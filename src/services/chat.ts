@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any*/
-export async function fetchClaudeResponse(messages: any[]) {
+export async function fetchGptResponse(messages: any[]) {
   const res = await fetch("/api/chat", {
     method: "POST",
     body: JSON.stringify({ messages }),
@@ -20,5 +20,5 @@ export async function fetchWebSearch(query: string) {
 
   const data = await res.json();
 
-  return data.json();
+  return data;
 }

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any*/
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Loader2, Send } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -14,30 +14,47 @@ import {
 import ImageInput from "@/components/ImageInput";
 import ChatMessage from "@/components/ChatMessage";
 import { toast } from "sonner";
-import { fetchClaudeResponse, fetchWebSearch } from "@/services/chat";
+import { fetchGptResponse, fetchWebSearch } from "@/services/chat";
 import { getLink } from "@/utils/formatLinks";
 import { Message } from "@/types/message";
+import { useChat } from "@/app/context/ChatContext";
+import { Input } from "./ui/input";
 
-export default function ChatApp() {
-  const [messages, setMessages] = useState<any[]>([]);
+interface IChatAppProps {
+  id: string;
+}
+
+export default function ChatApp({ id }: Readonly<IChatAppProps>) {
   const [input, setInput] = useState("");
   const [imageBase64, setImageBase64] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(false);
   const chatBottomRef = useRef<HTMLDivElement | null>(null);
 
+  const { chats, setChatMessages, getChatMessagesById } = useChat();
+
+  const messages = useMemo(
+    () => getChatMessagesById(id) ?? [],
+    [id, getChatMessagesById]
+  );
+  const nodesMessages = useMemo(() => {
+    const chat = chats.find((chat) => chat.id === id);
+    const allNodesMessages = chat?.nodes.map(getChatMessagesById).flat();
+    console.log("allNodesMessages", allNodesMessages);
+    return allNodesMessages ?? [];
+  }, [id, chats, getChatMessagesById]);
+
   async function handleWebSearch() {
     if (!input.trim()) return;
 
-    const userMsg = { role: "user", content: input };
+    const userMsg: Message = { role: "user", content: input };
 
-    const loadingMsg = {
+    const loadingMsg: Message = {
       role: "assistant",
       content: "Loading...",
-      loading: true,
     };
 
-    setMessages((prev) => [...prev, userMsg, loadingMsg]);
+    setChatMessages(id, [...messages, userMsg, loadingMsg]);
     setLoading(true);
 
     try {
@@ -48,22 +65,17 @@ export default function ChatApp() {
         )
         .join("\n\n");
 
-      const aiMsg = {
+      const aiMsg: Message = {
         role: "assistant",
         content: [
           {
-            type: "text",
+            type: "text" as const,
             text: `Here are the top search results:\n\n${resultsText}`,
           },
         ],
       };
 
-      setMessages((prev) => {
-        const copy = [...prev];
-        copy[copy.length - 1] = aiMsg;
-        return copy;
-      });
-
+      setChatMessages(id, [...messages, userMsg, aiMsg]);
       setInput("");
     } catch (err) {
       toast.error("Web search failed. Please try again.");
@@ -89,34 +101,42 @@ export default function ChatApp() {
       });
     }
 
-    const userMsg = {
+    const userMsg: Message = {
       role: "user",
       content,
     };
 
-    const loadingMsg = {
+    const loadingMsg: Message = {
       role: "assistant",
       content: "Loading...",
-      loading: true,
     };
 
-    setMessages((prev) => [...prev, userMsg, loadingMsg]);
+    setChatMessages(id, [...messages, userMsg, loadingMsg]);
 
     try {
-      const cleanMessages = messages.filter(
-        (msg) => msg.content !== "Loading..." && msg.content !== undefined
+      const allMsgsFromContext = [...nodesMessages, ...messages, userMsg];
+      const cleanMessages = allMsgsFromContext.filter(
+        (msg) => msg?.content !== "Loading..." && msg?.content !== undefined
       );
-      const data = await fetchClaudeResponse([...cleanMessages, userMsg]);
 
-      setMessages((prev) => {
-        const copy = [...prev];
-        copy[copy.length - 1] = {
+      console.log("data being sent:", cleanMessages);
+
+      const data = await fetchGptResponse([...cleanMessages, userMsg]);
+
+      console.log("data recieved", data);
+
+      const newMessages: Message[] = [
+        ...messages,
+        {
+          role: "user",
+          content,
+        },
+        {
           role: "assistant",
           content: data.result,
-        };
-        return copy;
-      });
-
+        },
+      ];
+      setChatMessages(id, newMessages);
       setInput("");
       setImageBase64(null);
     } catch (err: any) {
@@ -133,8 +153,13 @@ export default function ChatApp() {
     chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  return (
-    <Card className="w-full max-w-2xl mx-auto mt-10 bg-slate-900">
+  const renderHeader = () => {
+    const chatTitle = id
+      .split("-")
+      .map((word, index) => (index === 0 ? word : Number(word) + 1))
+      .join(" ");
+
+    return (
       <CardHeader className="flex flex-row items-center">
         <div className="flex items-center space-x-4">
           <Avatar>
@@ -142,26 +167,48 @@ export default function ChatApp() {
             <AvatarFallback>AI</AvatarFallback>
           </Avatar>
           <div>
-            <p className="text-sm font-medium leading-none">Claude AI</p>
-            <p className="text-sm text-muted-foreground">claude@getpoppy.ai</p>
+            <p className="text-sm font-medium leading-none">GPT {chatTitle}</p>
+            <p className="text-sm text-muted-foreground">gpt@getpoppy.ai</p>
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4 min-h-[400px] max-h-[50vh] overflow-y-auto scrollbar-hide">
-        {messages.map((msg, idx) => (
-          <ChatMessage key={idx} role={msg.role} content={msg.content} />
-        ))}
+    );
+  };
+
+  const renderMessages = () => {
+    if (!messages.length) {
+      return (
+        <p className="text-lg text-muted-foreground mt-auto">
+          No messages in history...
+        </p>
+      );
+    }
+
+    return messages.map((msg, idx) => (
+      <ChatMessage key={`${idx + 1}`} role={msg.role} content={msg.content} />
+    ));
+  };
+
+  return (
+    <Card
+      className="w-[550px] mx-auto mt-10 border-zinc-400 bg-black"
+      onMouseDown={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
+    >
+      {renderHeader()}
+      <CardContent className="space-y-4 min-h-[400px] max-h-[50vh] overflow-y-auto scrollbar-hide scrollable">
+        {renderMessages()}
         <div ref={chatBottomRef} />
       </CardContent>
       <CardFooter>
         <form onSubmit={handleSubmit} className="flex w-full flex-col gap-2">
           <div className="flex gap-4">
-            <textarea
+            <Input
+              type="text"
               placeholder="Type your message..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              rows={1}
-              className="scrollbar-hide flex-1 w-full min-w-80 resize-y rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 max-h-32 overflow-y-auto"
+              className="scrollbar-hide flex-1 w-full min-w-80 h-16 resize-none rounded-md border border-input bg-background px-3 py-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 overflow-y-auto"
             />
             <Button
               className="w-12 h-auto max-h-32"
