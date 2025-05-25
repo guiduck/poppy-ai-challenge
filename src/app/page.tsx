@@ -4,7 +4,6 @@ import React, { useCallback, useEffect } from "react";
 import ReactFlow, {
   addEdge,
   Background,
-  Controls,
   ReactFlowProvider,
   Node,
   Edge,
@@ -14,7 +13,7 @@ import ReactFlow, {
 import "reactflow/dist/style.css";
 import { Button } from "@/components/ui/button";
 import ChatNode from "@/components/ChatNode";
-import { useChat } from "./context/ChatContext";
+import useChat from "@/hooks/useChat";
 
 let id = 0;
 const getId = () => `chat-${id++}`;
@@ -126,14 +125,7 @@ export default function ChatCanvas() {
           onConnect={onConnect}
           fitView
         >
-          {/* <MiniMap /> */}
-          <Controls />
-          <Background
-            color="#111"
-            variant={"dots" as BackgroundVariant}
-            gap={20}
-            size={1}
-          />
+          <Background variant={"dots" as BackgroundVariant} gap={20} size={1} />
         </ReactFlow>
       </div>
     </ReactFlowProvider>
